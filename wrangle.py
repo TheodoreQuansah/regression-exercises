@@ -174,3 +174,13 @@ def scale_data(train, validate, test, scaler_type='standard'):
 
     return train_scaled, validate_scaled, test_scaled
 
+
+
+#_______________________________________________________________hypothesis test________________________________________________________________________
+
+def hypothesis_test():
+    alpha = 0.05
+    if p < alpha:
+        print('Reject the null.')
+    else:
+        print('Fail to reject the null')
