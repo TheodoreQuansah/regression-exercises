@@ -146,18 +146,31 @@ def quantiletransformer(train, output_distribution=None):
 
 #_____________________________________________________creating a mms scaled function______________________________________________________________
 
-def scale(train, val, test):
-    # Create the MinMaxScaler
-    mms = MinMaxScaler()
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, QuantileTransformer
 
-    # Fit the scaler to the original data
-    mms.fit(train[['squarefeet', 'tax_value', 'tax_amount']])
-    mms.fit(val[['squarefeet', 'tax_value', 'tax_amount']])
-    mms.fit(test[['squarefeet', 'tax_value', 'tax_amount']])
+def scale_data(train, validate, test, scaler_type='standard'):
     
-    # Transform the entire original data (all columns)
-    train[['squarefeet', 'tax_value', 'tax_amount']] = mms.transform(train[['squarefeet', 'tax_value', 'tax_amount']])
-    val[['squarefeet', 'tax_value', 'tax_amount']] = mms.transform(val[['squarefeet', 'tax_value', 'tax_amount']])
-    test[['squarefeet', 'tax_value', 'tax_amount']] = mms.transform(test[['squarefeet', 'tax_value', 'tax_amount']])
+    # Initialize the selected scaler
+    if scaler_type == 'standard':
+        scaler = StandardScaler()
+    elif scaler_type == 'minmax':
+        scaler = MinMaxScaler()
+    elif scaler_type == 'robust':
+        scaler = RobustScaler()
+    elif scaler_type == 'quantile':
+        scaler = QuantileTransformer(output_distribution='normal', random_state=42)
+    else:
+        raise ValueError("Invalid scaler_type. Choose from 'standard', 'minmax', 'robust', 'quantile'.")
 
-    return train, val, test
+    # Fit the scaler on the training data and transform all sets
+    train_scaled = scaler.fit_transform(train)
+    validate_scaled = scaler.transform(validate)
+    test_scaled = scaler.transform(test)
+
+    # Convert scaled arrays back to DataFrames
+    train_scaled = pd.DataFrame(train_scaled, columns=train.columns, index=train.index)
+    validate_scaled = pd.DataFrame(validate_scaled, columns=validate.columns, index=validate.index)
+    test_scaled = pd.DataFrame(test_scaled, columns=test.columns, index=test.index)
+
+    return train_scaled, validate_scaled, test_scaled
+
