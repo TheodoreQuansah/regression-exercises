@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from env import get_connection
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import QuantileTransformer, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, QuantileTransformer
 
 #___________________________________________________Aqcuiring the properties_2017 dataset from the zillow data base___________________________________________
 
@@ -50,7 +50,9 @@ def get_properties_2017():
 
 def clean_and_convert():
 
+    # Replace this line with how you obtain your DataFrame
     df = get_properties_2017()
+
     # Rename columns
     df = df.rename(columns={
         'bedroomcnt': 'bedrooms',
@@ -60,6 +62,22 @@ def clean_and_convert():
         'taxvaluedollarcnt': 'tax_value',
         'yearbuilt': 'year_built'
     })
+
+    bed_edges = [0, 2, 3, 4, 6, 8, 11, 25]
+    bath_edges = [0, 1, 2, 3, 4, 7, 15, 32]
+    sf_edges = [1, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 3_500, 4_000, 4_500, 5_000]
+    dec_edges = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020]
+
+    # Apply cut and assign the results to respective columns
+    df['bedrooms_bin'] = pd.cut(df['bedrooms'], bins=bed_edges, right=False)
+    df['bathrooms_bin'] = pd.cut(df['bathrooms'], bins=bath_edges, right=False)
+    df['squarefeet_bin'] = pd.cut(df['squarefeet'], bins=sf_edges, right=False)
+    df['decades'] = pd.cut(df['year_built'], bins=dec_edges, right=False)
+    
+    df['bedrooms_bin'] = df['bedrooms_bin'].apply(lambda x: x.right)
+    df['bathrooms_bin'] = df['bathrooms_bin'].apply(lambda x: x.right)
+    df['squarefeet_bin'] = df['squarefeet_bin'].apply(lambda x: x.right)
+    df['decades'] = df['decades'].apply(lambda x: x.right)
 
     # Drop rows with any null values
     df = df.dropna()
@@ -146,8 +164,6 @@ def quantiletransformer(train, output_distribution=None):
 
 #_____________________________________________________creating a mms scaled function______________________________________________________________
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, QuantileTransformer
-
 def scale_data(train, validate, test, scaler_type='standard'):
     
     # Initialize the selected scaler
@@ -176,11 +192,5 @@ def scale_data(train, validate, test, scaler_type='standard'):
 
 
 
-#_______________________________________________________________hypothesis test________________________________________________________________________
 
-def hypothesis_test():
-    alpha = 0.05
-    if p < alpha:
-        print('Reject the null.')
-    else:
-        print('Fail to reject the null')
+
